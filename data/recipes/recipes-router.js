@@ -1,0 +1,98 @@
+const express = require("express");
+
+// this should not be here!
+const Schemes = require('./recipes-model')
+
+
+const router = express.Router();
+
+router.get("/", (req, res) => {
+  Schemes.getAllRecipes()
+    .then(schemes => {
+      res.json(schemes);
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Failed to get recipe" });
+    });
+});
+
+router.get("/:id", (req, res) => {
+  const { id } = req.params;
+
+  db("users")
+    .where({ id })
+    .then(users => {
+      const user = users[0];
+
+      if (user) {
+        res.json(user);
+      } else {
+        res.status(404).json({ message: "Could not find user with given id." });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Failed to get user" });
+    });
+});
+
+// :5000/api/users/1/posts
+router.get('/:id/posts', async (req, res) => {
+  try {
+    const posts = await User.getUserPosts(req.params.id)
+    res.json(posts)
+  } catch (e) {
+    res.status(500).json(e.message)
+  }
+})
+
+router.post("/", (req, res) => {
+  const userData = req.body;
+
+  db("users")
+    .insert(userData, "id")
+    .then(ids => {
+      res.status(201).json({ created: ids[0] });
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Failed to create new user" });
+    });
+});
+
+router.put("/:id", (req, res) => {
+  const { id } = req.params;
+  const changes = req.body;
+
+  db("users")
+    .where({ id })
+    .update(changes)
+    .then(count => {
+      if (count) {
+        res.json({ update: count });
+      } else {
+        res.status(404).json({ message: "Could not find user with given id" });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Failed to update user" });
+    });
+});
+
+router.delete("/:id", (req, res) => {
+  const { id } = req.params;
+
+  db("users")
+    .where({ id })
+    .del()
+    .then(count => {
+      if (count) {
+        res.json({ removed: count });
+      } else {
+        res.status(404).json({ message: "Could not find user with given id" });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Failed to delete user" });
+    });
+});
+
+module.exports = router;
